@@ -1,2 +1,2 @@
 # PadBus
-Open Source Digital Pad Communication Library
+Open Source Digital Pad Communication Library - Shared logic
