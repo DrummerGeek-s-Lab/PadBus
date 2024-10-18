@@ -12,5 +12,8 @@ add_executable(PadBus
         include/PadBus/IObservable.h
         src/Event.cpp
         src/FunctionObserver.cpp
-        src/main.cpp
-    test/MockClock.cpp)
+        include/PadBus/StateMachine.h
+        include/PadBus/IState.h
+        src/StateMachine.cpp
+        include/PadBus/CRC.h
+        src/CRC.cpp)
