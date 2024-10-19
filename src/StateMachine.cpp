@@ -3,52 +3,36 @@
 using namespace std;
 
 namespace padbus {
-    template<typename TContext>
-    void StateMachine<TContext>::initialize(shared_ptr<IState<TContext>> initialState) {
+    void StateMachineBase::initializeInternal(shared_ptr<IStateBase> initialState) {
         _initialState = move(initialState);
         _isInitialized = true;
-        transition(_initialState);
+        transitionInternal(_initialState);
     }
 
-    template <typename TContext>
-    void StateMachine<TContext>::transition(shared_ptr<IState<TContext>> nextState) {
+    void StateMachineBase::transitionInternal(shared_ptr<IStateBase> nextState) {
         if (_currentState) {
             _currentState->onExit();
         }
 
         _currentState = move(nextState);
-        _currentState->_stateMachine = this;
+        _currentState->setStateMachine(this);
         _currentState->onEnter();
     }
 
-    template<typename TContext>
-    void StateMachine<TContext>::reset() {
+    void StateMachineBase::resetInternal() {
         if (_currentState) {
             _currentState->onExit();
         }
 
         _currentState = nullptr;
-        _context = TContext();
-        transition(_initialState);
+        transitionInternal(_initialState);
     }
 
-    template<typename TContext>
-    TContext* StateMachine<TContext>::getContext() {
-        return &_context;
-    }
-
-    template<typename TContext>
-    shared_ptr<IState<TContext> > StateMachine<TContext>::getCurrentState() {
+    shared_ptr<IStateBase > StateMachineBase::getCurrentStateInternal() {
         return _currentState;
     }
 
-    template<typename TContext>
-    TContext* IState<TContext>::getContext() {
-        return _stateMachine->getContext();
-    }
-
-    template<typename TContext>
-    void IState<TContext>::transition(shared_ptr<IState> nextState) {
-        _stateMachine->transition(nextState);
+    void IStateBase::transitionInternal(shared_ptr<IStateBase> nextState) const {
+        getStateMachine()->transitionInternal(move(nextState));
     }
 }

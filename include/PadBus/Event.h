@@ -7,55 +7,73 @@
 #include "IObservable.h"
 
 using namespace std;
+using namespace padbus;
 
 namespace padbus {
-    template <typename TArgs = EventArgs>
-    class Event {
-        class Subject;
+    class EventBase;
+    class IObserverBase;
+
+    class Subject {
+        vector<IObserverBase*> _observers;
 
         public:
-            Event() {
-                _subject = make_shared<Subject>();
-            }
+            void attachObserver(IObserverBase* observer);
+            void detachObserver(IObserverBase* observer);
+            void notifyObservers(EventArgs* args);
+    };
 
-            class IObserver {
-                weak_ptr<Subject> _subject;
+    class IObserverBase {
+        weak_ptr<Subject> _subject;
 
-                virtual void update(TArgs* args) = 0;
+        virtual void updateInternal(EventArgs* args) = 0;
+        friend class Subject;
+        protected:
+            explicit IObserverBase(const EventBase* event);
+        public:
+            virtual ~IObserverBase();
+            bool enabled = true;
+            function<bool()> getEnabledFunc;
+    };
 
-                public:
-                    explicit IObserver(Event* event) {
-                        _subject = event->_subject;
-                        event->_subject->attachObserver(this);
-                    }
 
-                    bool enabled = true;
-                    function<bool()> getEnabledFunc;
-                    [[nodiscard]] virtual bool getEnabled() const { return true; }
+    class EventBase {
+        friend class IObserverBase;
 
-                    virtual ~IObserver() {
-                        if (shared_ptr<Subject> ptr = _subject.lock()) {
-                            ptr->detachObserver(this);
-                        }
-                    }
-
-                    friend class Subject;
-                };
-
-        private:
-            class Subject {
-                vector<IObserver*> _observers;
-
-                public:
-                    void attachObserver(IObserver* observer);
-                    void detachObserver(IObserver* observer);
-                    void notifyObservers(TArgs* args);
-            };
-
+        protected:
             shared_ptr<Subject> _subject;
 
-            void notifyObservers(TArgs* args);
-            friend class IObservable;
+            explicit EventBase();
+            void notifyObservers(EventArgs* args) const;
+};
+
+    template<typename TArgs = EventArgs>
+    class Event : public EventBase {
+        void notifyObservers(TArgs* args) const {
+            EventBase::notifyObservers(args);
+        };
+
+        friend class IObservable;
+    };
+
+    template<typename TArgs = EventArgs>
+    class IObserver : public IObserverBase {
+        virtual void update(TArgs* args) = 0;
+        void updateInternal(EventArgs* args) final { update(dynamic_cast<TArgs*>(args)); }
+        public:
+            explicit IObserver(const Event<TArgs>* event) : IObserverBase(event) {}
+    };
+
+    template<typename TArgs = EventArgs>
+    class FunctionObserver final : public IObserver<TArgs> {
+        function<void(TArgs*)> _fn;
+
+        void update(TArgs* args) override {
+            _fn(args);
+        }
+
+        public:
+            explicit FunctionObserver(Event<TArgs>* event, function<void(EventArgs*)> fn) :
+                IObserver<TArgs>(event), _fn(fn) { }
     };
 }
 

@@ -2,23 +2,27 @@
 #define PADBUS_IOBSERVABLE_H
 
 namespace padbus {
-    template <typename TArgs>
-    class Event;
     class IObservable;
 
-    struct EventArgs{
+    class EventArgs{
         IObservable* sender;
+        public:
+            EventArgs() = default;
+            [[nodiscard]] IObservable* getSender() const {return sender;}
+            virtual ~EventArgs() = default;
 
-        EventArgs() = default;
-
-        explicit EventArgs(const IObservable* sender);
+        friend class IObservable;
     };
+
+    template <typename TArgs>
+    class Event;
 
     class IObservable {
         protected:
             template <typename TArgs = EventArgs>
             void handleEvent(Event<TArgs>* event, TArgs* args) {
-                args->sender = this;
+                EventArgs* baseArgs = args;
+                baseArgs->sender = this;
                 event->notifyObservers(args);
             }
     };

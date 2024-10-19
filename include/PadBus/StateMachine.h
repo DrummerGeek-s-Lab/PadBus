@@ -7,20 +7,36 @@
 using namespace std;
 
 namespace padbus {
-    template <typename TContext>
-    class StateMachine {
+    class StateMachineBase {
         bool _isInitialized = false;
-        shared_ptr<IState<TContext>> _initialState = nullptr;
-        shared_ptr<IState<TContext>> _currentState = nullptr;
-        TContext _context;
+        shared_ptr<IStateBase> _initialState = nullptr;
+        shared_ptr<IStateBase> _currentState = nullptr;
+
+        protected:
+            void initializeInternal(shared_ptr<IStateBase> initialState);
+            void transitionInternal(shared_ptr<IStateBase> nextState);
+            void resetInternal();
+            [[nodiscard]] shared_ptr<IStateBase> getCurrentStateInternal();
 
         public:
-            void initialize(shared_ptr<IState<TContext>> initialState);
-            void transition(shared_ptr<IState<TContext>> nextState);
-            void reset();
-            [[nodiscard]] TContext* getContext();
-            [[nodiscard]] shared_ptr<IState<TContext>> getCurrentState();
-            ~StateMachine() = default;
+            virtual ~StateMachineBase() = default;
+
+        friend class IStateBase;
+    };
+
+    template<typename TContext>
+    class StateMachine : public StateMachineBase {
+        TContext _context = TContext();
+        public:
+            void initialize(shared_ptr<IState<TContext>> initialState) { initializeInternal(initialState); }
+            void transition(shared_ptr<IState<TContext>> nextState) { transitionInternal(nextState); }
+            void reset() {
+                _context = TContext();
+                resetInternal();
+            }
+            IState<TContext> getCurrentState() { return getCurrentStateInternal(); }
+            TContext getContext() { return _context; }
+            ~StateMachine() override = default;
     };
 }
 
