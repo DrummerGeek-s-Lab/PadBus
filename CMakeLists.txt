@@ -13,7 +13,11 @@ add_library(PadBus
         src/Event.cpp
         src/IObserver.cpp
         src/StateMachine.cpp
-        src/Subject.cpp)
+        src/Subject.cpp
+        include/PadBus/Client/PadClient.h
+        src/Client/PadClient.cpp
+        src/Client/InitializingState.cpp
+        src/Client/InitializingState.h)
 
 add_executable(
         PadBus_ScratchConsole

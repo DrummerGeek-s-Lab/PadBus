@@ -35,7 +35,6 @@ namespace padbus {
             function<bool()> getEnabledFunc;
     };
 
-
     class EventBase {
         friend class IObserverBase;
 
@@ -44,7 +43,7 @@ namespace padbus {
 
             explicit EventBase();
             void notifyObservers(EventArgs* args) const;
-};
+    };
 
     template<typename TArgs = EventArgs>
     class Event : public EventBase {
@@ -58,7 +57,9 @@ namespace padbus {
     template<typename TArgs = EventArgs>
     class IObserver : public IObserverBase {
         virtual void update(TArgs* args) = 0;
-        void updateInternal(EventArgs* args) final { update(dynamic_cast<TArgs*>(args)); }
+        void updateInternal(EventArgs* args) final {
+            update(static_cast<TArgs*>(args));
+        }
         public:
             explicit IObserver(const Event<TArgs>* event) : IObserverBase(event) {}
     };

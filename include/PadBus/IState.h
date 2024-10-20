@@ -1,43 +1,60 @@
 #ifndef PADBUS_ISTATE_H
 #define PADBUS_ISTATE_H
 
-#include <memory>
-#include <string>
-
 using namespace std;
 
 namespace padbus {
     struct StateContext {};
     class StateMachineBase;
 
-    template <typename TContext = StateContext>
+    template<
+        typename TEnum,
+        typename TContext = StateContext,
+        enable_if_t<is_enum_v<TEnum>, bool> = true
+    >
     class StateMachine;
 
     class IStateBase {
+        int _id;
+        StateMachineBase* _stateMachine;
+        bool _entered;
+        bool _waiting;
+        void reset();
+        void onResume();
         protected:
-            virtual void setStateMachine(StateMachineBase* stateMachine) = 0;
-            [[nodiscard]] virtual StateMachineBase* getStateMachine() const = 0;
-            void transitionInternal(shared_ptr<IStateBase> nextState) const;
-            virtual void onEnter() = 0;
-            virtual void onExit() {}
+            explicit IStateBase(int id);
+            [[nodiscard]] StateMachineBase *stateMachineInternal() const;
+            [[nodiscard]] int idInternal() const;
+            void wait();
+            void resume();
+            void jumpToStateInternal(int stateId) const;
+            virtual void onEnterState() {}
+            virtual void onExitState() {}
+            virtual void onReset() {}
+            virtual void onRegister() {}
         public:
-            [[nodiscard]] virtual string getName() const = 0;
             virtual ~IStateBase() = default;
+            virtual bool enabled();
+            void enterState();
+            void exitState();
 
         friend class StateMachineBase;
     };
 
-    template <class TContext = StateContext>
+    template<
+        typename TEnum,
+        typename TContext = StateContext,
+        typename TStateMachine = StateMachine<TEnum, TContext>,
+        enable_if_t<is_enum_v<TEnum>, bool> = true
+    >
     class IState : public IStateBase {
-        StateMachine<TContext>* _stateMachine = nullptr;;
-        void setStateMachine(StateMachineBase* stateMachine) final { _stateMachine = stateMachine; }
-        StateMachine<TContext>* getStateMachine() const final { return _stateMachine; }
-
         protected:
-            TContext* getContext() { return _stateMachine->getContext(); }
-            void transition(shared_ptr<IState> nextState) { transitionInternal(nextState); }
-
+            explicit IState(TEnum id) : IStateBase(id) {}
+            TStateMachine* stateMachine() const { return static_cast<TStateMachine*>(stateMachineInternal()); }
+            TContext* context() { return stateMachine()->context(); }
+            void jumpToState(TEnum stateId) { jumpToStateInternal(static_cast<int>(stateId)); }
         public:
+            [[nodiscard]] TEnum id() const { return static_cast<TEnum>(idInternal()); };
             ~IState() override = default;
     };
 }

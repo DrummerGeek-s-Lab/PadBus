@@ -1,4 +1,4 @@
-#include "CRC.h"
+#include <PadBus/CRC.h>
 
 using namespace std;
 using namespace padbus;

@@ -5,10 +5,10 @@ namespace padbus {
     class IObservable;
 
     class EventArgs{
-        IObservable* sender;
+        IObservable* sender = nullptr;
         public:
             EventArgs() = default;
-            [[nodiscard]] IObservable* getSender() const {return sender;}
+            [[nodiscard]] IObservable* getSender() const { return sender; }
             virtual ~EventArgs() = default;
 
         friend class IObservable;
@@ -19,6 +19,10 @@ namespace padbus {
 
     class IObservable {
         protected:
+            template <typename TArgs = EventArgs>
+            void handleEvent(Event<TArgs>* event) {
+                handleEvent(event, TArgs());
+            }
             template <typename TArgs = EventArgs>
             void handleEvent(Event<TArgs>* event, TArgs* args) {
                 EventArgs* baseArgs = args;

@@ -16,6 +16,7 @@ add_executable(
         PadBus_tests
         TestRunner.cpp
         CRC_tests.cpp
-        Event_tests.cpp)
+        Event_tests.cpp
+        StateMachine_tests.cpp)
 
 target_link_libraries(PadBus_tests PadBus gtest_main)
